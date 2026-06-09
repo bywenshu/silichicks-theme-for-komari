@@ -120,28 +120,15 @@ jobs:
           set -euo pipefail
 
           tag="${{ steps.release.outputs.tag }}"
-          previous_tag="$(git tag --sort=-v:refname | grep -v "^${tag}$" | head -n 1 || true)"
-          short_sha="$(git rev-parse --short HEAD)"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="$tag" \
+            -f target_commitish="$GITHUB_SHA" \
+            --jq .body > release-notes.md
 
-          {
-            echo "## Komari Web ${tag}"
-            echo
-            echo "This release follows [Komari Monitor ${tag}](${{ steps.release.outputs.main_url }}) and packages the default web theme used by the main application."
-            echo
-            echo "### Package"
-            echo "- Built from \`radix\` commit \`${short_sha}\`."
-            echo "- Uploaded \`dist-release.zip\` with the compiled web assets, theme manifest, and preview image."
-            echo "- Version tag is aligned with the main Komari release."
-            echo
-            if [ -n "$previous_tag" ]; then
-              echo "### Web changes since ${previous_tag}"
-              echo "See the full changelog for every frontend and theme update included in this package."
-              echo "**Full Changelog**: https://github.com/komari-monitor/komari-web/compare/${previous_tag}...${tag}"
-            else
-              echo "### Web changes"
-              echo "- Initial mirrored web release."
-            fi
-          } > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "GitHub returned empty release notes for ${tag}." >&2
+            exit 1
+          fi
 
       - name: Create or update web release
         if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
