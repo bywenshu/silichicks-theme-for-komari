@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Set up Node.js
         if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: "npm"
@@ -121,29 +121,21 @@ jobs:
 
           tag="${{ steps.release.outputs.tag }}"
           previous_tag="$(git tag --sort=-v:refname | grep -v "^${tag}$" | head -n 1 || true)"
-          change_log=""
-          if [ -n "$previous_tag" ]; then
-            change_log="$(git log --pretty=format:'- %s (%h)' "${previous_tag}..HEAD" || true)"
-          fi
+          short_sha="$(git rev-parse --short HEAD)"
 
           {
             echo "## Komari Web ${tag}"
             echo
             echo "This release follows [Komari Monitor ${tag}](${{ steps.release.outputs.main_url }}) and packages the default web theme used by the main application."
             echo
-            echo "### Highlights"
-            echo "- Built from the latest \`radix\` branch."
+            echo "### Package"
+            echo "- Built from \`radix\` commit \`${short_sha}\`."
             echo "- Uploaded \`dist-release.zip\` with the compiled web assets, theme manifest, and preview image."
-            echo "- Keeps the web release tag aligned with the main Komari release tag."
+            echo "- Version tag is aligned with the main Komari release."
             echo
             if [ -n "$previous_tag" ]; then
               echo "### Web changes since ${previous_tag}"
-              if [ -n "$change_log" ]; then
-                printf '%s\n' "$change_log"
-              else
-                echo "- No web changes since ${previous_tag}."
-              fi
-              echo
+              echo "See the full changelog for every frontend and theme update included in this package."
               echo "**Full Changelog**: https://github.com/komari-monitor/komari-web/compare/${previous_tag}...${tag}"
             else
               echo "### Web changes"
