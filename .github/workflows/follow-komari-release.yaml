@@ -1,0 +1,185 @@
+name: Follow Komari Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Komari release tag to mirror. Leave empty to use the latest stable release."
+        required: false
+        type: string
+      force:
+        description: "Rebuild and overwrite the release asset if the web release already exists."
+        required: false
+        default: false
+        type: boolean
+  repository_dispatch:
+    types:
+      - komari-release-published
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: follow-komari-release-${{ github.event.inputs.tag || github.event.client_payload.tag || 'latest' }}
+  cancel-in-progress: false
+
+jobs:
+  mirror-release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MANUAL_TAG: ${{ github.event.inputs.tag || '' }}
+      DISPATCH_TAG: ${{ github.event.client_payload.tag || '' }}
+      FORCE_RELEASE: ${{ github.event.inputs.force || 'false' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Komari release
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${MANUAL_TAG}"
+          if [ -z "$tag" ]; then
+            tag="${DISPATCH_TAG}"
+          fi
+
+          if [ -z "$tag" ]; then
+            tag="$(gh api repos/komari-monitor/komari/releases --jq '[.[] | select(.draft == false and .prerelease == false)][0].tag_name')"
+          fi
+
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "Unable to resolve a Komari release tag." >&2
+            exit 1
+          fi
+
+          main_url="$(gh release view "$tag" --repo komari-monitor/komari --json url --jq .url)"
+          main_published_at="$(gh release view "$tag" --repo komari-monitor/komari --json publishedAt --jq .publishedAt)"
+
+          release_exists="false"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            release_exists="true"
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "main_url=$main_url" >> "$GITHUB_OUTPUT"
+          echo "main_published_at=$main_published_at" >> "$GITHUB_OUTPUT"
+          echo "exists=$release_exists" >> "$GITHUB_OUTPUT"
+          echo "force=${FORCE_RELEASE}" >> "$GITHUB_OUTPUT"
+
+      - name: Stop if web release already exists
+        if: steps.release.outputs.exists == 'true' && steps.release.outputs.force != 'true'
+        shell: bash
+        run: |
+          {
+            echo "### Komari Web release"
+            echo
+            echo "Release ${{ steps.release.outputs.tag }} already exists. Nothing to do."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Node.js
+        if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
+        run: npm ci
+
+      - name: Build web package
+        if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
+        run: npm run build
+
+      - name: Package release asset
+        if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f dist-release.zip
+          rm -rf release-package
+          mkdir -p release-package
+          cp preview.png release-package/
+          cp komari-theme.json release-package/
+          cp -r dist release-package/
+          cd release-package
+          zip -qr ../dist-release.zip .
+
+      - name: Generate release notes
+        if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${{ steps.release.outputs.tag }}"
+          previous_tag="$(git tag --sort=-v:refname | grep -v "^${tag}$" | head -n 1 || true)"
+          change_log=""
+          if [ -n "$previous_tag" ]; then
+            change_log="$(git log --pretty=format:'- %s (%h)' "${previous_tag}..HEAD" || true)"
+          fi
+
+          {
+            echo "## Komari Web ${tag}"
+            echo
+            echo "This release follows [Komari Monitor ${tag}](${{ steps.release.outputs.main_url }}) and packages the default web theme used by the main application."
+            echo
+            echo "### Highlights"
+            echo "- Built from the latest \`radix\` branch."
+            echo "- Uploaded \`dist-release.zip\` with the compiled web assets, theme manifest, and preview image."
+            echo "- Keeps the web release tag aligned with the main Komari release tag."
+            echo
+            if [ -n "$previous_tag" ]; then
+              echo "### Web changes since ${previous_tag}"
+              if [ -n "$change_log" ]; then
+                printf '%s\n' "$change_log"
+              else
+                echo "- No web changes since ${previous_tag}."
+              fi
+              echo
+              echo "**Full Changelog**: https://github.com/komari-monitor/komari-web/compare/${previous_tag}...${tag}"
+            else
+              echo "### Web changes"
+              echo "- Initial mirrored web release."
+            fi
+          } > release-notes.md
+
+      - name: Create or update web release
+        if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${{ steps.release.outputs.tag }}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$tag" \
+              --notes-file release-notes.md \
+              --latest
+            gh release upload "$tag" dist-release.zip \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+          else
+            gh release create "$tag" dist-release.zip \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "$tag" \
+              --notes-file release-notes.md \
+              --latest
+          fi
+
+          {
+            echo "### Komari Web release"
+            echo
+            echo "Published $tag following ${{ steps.release.outputs.main_url }}."
+            echo
+            echo "Asset: \`dist-release.zip\`"
+          } >> "$GITHUB_STEP_SUMMARY"
