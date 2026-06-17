@@ -364,6 +364,24 @@
     "title": "ログ"
   },
   "network_speed": "ネットワーク速度",
+  "costSummary": {
+    "autoExcludeHint": "買い切りと長期サーバーは自動的に除外されます。",
+    "clear": "クリア",
+    "costExcludeHint": "チェックしたサーバーはコスト集計から除外されます。",
+    "currency": "集計通貨",
+    "emptyNodes": "サーバーがありません",
+    "exchangeRateError": "為替レートの取得に失敗しました。換算不要の請求のみ集計します",
+    "excludedCount": "除外 {{count}} / {{total}}",
+    "loading": "為替換算中...",
+    "missingCurrencies": "未換算: {{currencies}}",
+    "monthlyYearly": "月 {{monthly}} / 年 {{yearly}}",
+    "networkExcludeHint": "チェックしたサーバーはネットワーク速度とトラフィック概要の合計から除外されます。",
+    "networkSettings": "ネットワーク速度集計設定",
+    "noRecurringNodes": "集計対象コストなし",
+    "settings": "コスト集計設定",
+    "settingsButton": "設定",
+    "title": "コスト"
+  },
   "nodeCard": {
     "actions": "アクション",
     "arch": "アーキテクチャ",
@@ -480,6 +498,14 @@
     "yes": "はい"
   },
   "region_overview": "地域の点灯",
+  "resourceSummary": {
+    "coresUnit": "コア",
+    "cpuCores": "CPU コア",
+    "disk": "ディスク容量",
+    "gbUnit": "GB",
+    "memory": "メモリ",
+    "regionOnlineValue": "{{regions}}（{{online}}/{{total}} オンライン）"
+  },
   "rpc2": {
     "automatic_connection_failed": "自動接続に失敗しました:",
     "batch_request_failed": "バッチリクエストに失敗しました",

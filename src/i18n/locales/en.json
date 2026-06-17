@@ -364,6 +364,24 @@
     "title": "Logs"
   },
   "network_speed": "Network Speed",
+  "costSummary": {
+    "autoExcludeHint": "One-time and long-term servers are excluded automatically.",
+    "clear": "Clear",
+    "costExcludeHint": "Checked servers are excluded from cost totals.",
+    "currency": "Summary Currency",
+    "emptyNodes": "No servers",
+    "exchangeRateError": "Failed to load exchange rates; only non-converted bills are counted",
+    "excludedCount": "Excluded {{count}} / {{total}}",
+    "loading": "Converting rates...",
+    "missingCurrencies": "Not converted: {{currencies}}",
+    "monthlyYearly": "Mo {{monthly}} / Yr {{yearly}}",
+    "networkExcludeHint": "Checked servers are excluded from network speed and traffic overview totals.",
+    "networkSettings": "Network Speed Summary",
+    "noRecurringNodes": "No counted costs",
+    "settings": "Cost Summary Settings",
+    "settingsButton": "Settings",
+    "title": "Cost"
+  },
   "nodeCard": {
     "actions": "Actions",
     "arch": "Architecture",
@@ -480,6 +498,14 @@
     "yes": "Yes"
   },
   "region_overview": "Region",
+  "resourceSummary": {
+    "coresUnit": "cores",
+    "cpuCores": "CPU Cores",
+    "disk": "Disk Space",
+    "gbUnit": "GB",
+    "memory": "Memory",
+    "regionOnlineValue": "{{regions}} ({{online}}/{{total}} online)"
+  },
   "rpc2": {
     "automatic_connection_failed": "Automatic connection failed:",
     "batch_request_failed": "Batch request failed",

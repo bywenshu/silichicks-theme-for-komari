@@ -32,7 +32,6 @@ interface NodeTableProps {
 
 type SortField =
   | "name"
-  | "os"
   | "status"
   | "cpu"
   | "ram"
@@ -152,10 +151,6 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
         comparison = a.name.localeCompare(b.name);
         break;
       }
-      case "os": {
-        comparison = a.os.localeCompare(b.os);
-        break;
-      }
       case "status": {
         comparison = Number(bOnline) - Number(aOnline); // 在线状态：true > false
         break;
@@ -218,23 +213,13 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
           <TableRow>
             <TableHead className="w-[24px]"></TableHead>
             <TableHead
-              className="w-[200px] min-w-[150px] cursor-pointer hover:bg-accent-2 select-none"
+              className="w-[280px] min-w-[240px] cursor-pointer hover:bg-accent-2 select-none"
               onClick={handleSort("name")}
               title={t("nodeCard.sortTooltip")}
             >
               <Flex align="center" gap="1">
                 {t("nodeCard.name")}
                 {getSortIcon("name")}
-              </Flex>
-            </TableHead>
-            <TableHead
-              className="cursor-pointer hover:bg-accent-2 select-none"
-              onClick={handleSort("os")}
-              title={t("nodeCard.sortTooltip")}
-            >
-              <Flex align="center" gap="1">
-                {t("nodeCard.os")}
-                {getSortIcon("os")}
               </Flex>
             </TableHead>
             <TableHead
@@ -363,15 +348,21 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
                     </div>
                   </TableCell>
                   <TableCell className="node-name-cell">
-                    <Flex align="center" gap="1">
+                    <Flex align="center" gap="2" className="min-w-0">
                       <Flag flag={node.region} />
+                      <img
+                        src={getOSImage(node.os)}
+                        alt={node.os}
+                        title={node.os}
+                        className="w-5 h-5 shrink-0"
+                      />
                       <Link
                         to={`/instance/${node.uuid}`}
-                        className="hover:underline"
+                        className="hover:underline min-w-0"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Flex direction="column" gap="0">
-                          <label className="max-w-[150px] font-bold text-lg truncate">
+                        <Flex direction="column" gap="0" className="min-w-0">
+                          <label className="max-w-[220px] font-bold text-lg truncate">
                             {node.name}
                           </label>
                           {isOnline ? (
@@ -386,14 +377,6 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
                         </Flex>
                       </Link>
                     </Flex>
-                  </TableCell>
-
-                  <TableCell className="w-4">
-                    <img
-                      src={getOSImage(node.os)}
-                      alt={node.os}
-                      className="w-5 h-5 mr-2"
-                    />
                   </TableCell>
 
                   <TableCell>
@@ -464,7 +447,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
                 {/* 展开的详细信息行 */}
                 {isExpanded && (
                   <TableRow className="expanded-row">
-                    <TableCell colSpan={12} className="bg-accent-1">
+                    <TableCell colSpan={11} className="bg-accent-1">
                       <div className="expand-content">
                         <ExpandedNodeDetails node={node} nodeData={nodeData} />
                       </div>

@@ -364,6 +364,24 @@
     "title": "日誌"
   },
   "network_speed": "網路速率",
+  "costSummary": {
+    "autoExcludeHint": "一次性付費和長期伺服器已自動排除。",
+    "clear": "清空",
+    "costExcludeHint": "勾選後不參與成本統計。",
+    "currency": "統計貨幣",
+    "emptyNodes": "暫無伺服器",
+    "exchangeRateError": "匯率取得失敗，僅統計無需換算的帳單",
+    "excludedCount": "已排除 {{count}} / {{total}}",
+    "loading": "匯率換算中...",
+    "missingCurrencies": "未換算: {{currencies}}",
+    "monthlyYearly": "月 {{monthly}} / 年 {{yearly}}",
+    "networkExcludeHint": "勾選後該伺服器不參與網路速率和流量概覽彙總。",
+    "networkSettings": "網路速率統計設定",
+    "noRecurringNodes": "無可統計成本",
+    "settings": "成本統計設定",
+    "settingsButton": "設定",
+    "title": "成本"
+  },
   "nodeCard": {
     "actions": "操作",
     "arch": "架構",
@@ -480,6 +498,14 @@
     "yes": "是的"
   },
   "region_overview": "點亮地區",
+  "resourceSummary": {
+    "coresUnit": "核",
+    "cpuCores": "CPU 核數",
+    "disk": "磁碟空間",
+    "gbUnit": "GB",
+    "memory": "記憶體",
+    "regionOnlineValue": "{{regions}}（{{online}}/{{total}} 線上）"
+  },
   "rpc2": {
     "automatic_connection_failed": "自動連線失敗:",
     "batch_request_failed": "批量請求失敗",

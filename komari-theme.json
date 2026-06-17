@@ -1,11 +1,11 @@
 {
-  "name": "Komari",
-  "short": "default",
-  "description": "Komari default theme",
+  "name": "silichicks",
+  "short": "silichicks",
+  "description": "silichicks theme for Komari",
   "version": "1.0.0",
-  "author": "Akizon77",
-  "url": "https://github.com/komari-monitor/komari-web",
-  "preview": "dist/assets/edit_117847723_p0.png",
+  "author": "bywenshu",
+  "url": "https://github.com/bywenshu/silichicks-theme-for-komari",
+  "preview": "dist/assets/silichicks-cover.webp",
   "configuration": {
     "type": "managed",
     "name": {

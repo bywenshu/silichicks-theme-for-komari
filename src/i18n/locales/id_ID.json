@@ -364,6 +364,24 @@
     "title": "Log"
   },
   "network_speed": "Kecepatan Jaringan",
+  "costSummary": {
+    "autoExcludeHint": "Server sekali bayar dan jangka panjang otomatis dikecualikan.",
+    "clear": "Bersihkan",
+    "costExcludeHint": "Server yang dicentang dikecualikan dari total biaya.",
+    "currency": "Mata Uang Ringkasan",
+    "emptyNodes": "Tidak ada server",
+    "exchangeRateError": "Gagal memuat kurs; hanya tagihan tanpa konversi yang dihitung",
+    "excludedCount": "Dikecualikan {{count}} / {{total}}",
+    "loading": "Mengonversi kurs...",
+    "missingCurrencies": "Tidak dikonversi: {{currencies}}",
+    "monthlyYearly": "Bulanan {{monthly}} / Tahunan {{yearly}}",
+    "networkExcludeHint": "Server yang dicentang dikecualikan dari total kecepatan jaringan dan ringkasan trafik.",
+    "networkSettings": "Ringkasan Kecepatan Jaringan",
+    "noRecurringNodes": "Tidak ada biaya yang dihitung",
+    "settings": "Pengaturan Ringkasan Biaya",
+    "settingsButton": "Pengaturan",
+    "title": "Biaya"
+  },
   "nodeCard": {
     "actions": "Aksi",
     "arch": "Arsitektur",
@@ -480,6 +498,14 @@
     "yes": "Ya"
   },
   "region_overview": "Wilayah",
+  "resourceSummary": {
+    "coresUnit": "core",
+    "cpuCores": "Core CPU",
+    "disk": "Ruang Disk",
+    "gbUnit": "GB",
+    "memory": "Memori",
+    "regionOnlineValue": "{{regions}} ({{online}}/{{total}} online)"
+  },
   "rpc2": {
     "automatic_connection_failed": "Koneksi otomatis gagal:",
     "batch_request_failed": "Permintaan batch gagal",

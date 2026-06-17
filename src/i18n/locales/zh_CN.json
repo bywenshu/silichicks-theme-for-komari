@@ -308,6 +308,24 @@
   },
   "copy": "复制",
   "copy_success": "已复制到剪贴板",
+  "costSummary": {
+    "autoExcludeHint": "一次性付费和长期服务器已自动排除。",
+    "clear": "清空",
+    "costExcludeHint": "勾选后不参与成本统计。",
+    "currency": "统计货币",
+    "emptyNodes": "暂无服务器",
+    "exchangeRateError": "汇率获取失败，仅统计无需换算的账单",
+    "excludedCount": "已排除 {{count}} / {{total}}",
+    "loading": "汇率换算中...",
+    "missingCurrencies": "未换算: {{currencies}}",
+    "monthlyYearly": "月 {{monthly}} / 年 {{yearly}}",
+    "networkExcludeHint": "勾选后该服务器不参与网络速率和流量概览汇总。",
+    "networkSettings": "网络速率统计设置",
+    "noRecurringNodes": "无可统计成本",
+    "settings": "成本统计设置",
+    "settingsButton": "设置",
+    "title": "成本"
+  },
   "current_online": "当前在线",
   "current_time": "当前时间",
   "delete": "删除",
@@ -480,6 +498,14 @@
     "yes": "是的"
   },
   "region_overview": "点亮地区",
+  "resourceSummary": {
+    "coresUnit": "核",
+    "cpuCores": "CPU 核数",
+    "disk": "磁盘空间",
+    "gbUnit": "GB",
+    "memory": "内存",
+    "regionOnlineValue": "{{regions}}（{{online}}/{{total}} 在线）"
+  },
   "rpc2": {
     "automatic_connection_failed": "自动连接失败:",
     "batch_request_failed": "批量请求失败",
