@@ -7,6 +7,10 @@ It keeps Komari's original frontend structure and adds theme-specific UI
 changes, including the silichicks theme metadata, preview artwork, resource
 summary cards, cost summary controls, and adjusted node-table presentation.
 
+## Preview
+
+![silichicks dashboard preview](docs/silichicks-dashboard-preview.webp)
+
 ## Download
 
 Download the latest theme package from:
