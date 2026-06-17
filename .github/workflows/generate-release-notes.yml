@@ -49,11 +49,26 @@ jobs:
               return;
             }
 
+            const importAsset = `silichicks-theme-${tag}.zip`;
+            const importUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${importAsset}`;
+            const downloadSection = [
+              "## Download / Import",
+              "",
+              `For Komari theme import, download **\\`${importAsset}\\`** from the Assets section below.`,
+              "",
+              `Direct download: ${importUrl}`,
+              "",
+              "In Komari: Admin panel -> Theme Management -> Upload Theme -> select this zip file.",
+              "",
+              "Do not import `Source code (zip)` or `Source code (tar.gz)`. Those are GitHub source archives, not Komari theme packages.",
+              "",
+            ].join("\n");
+
             await github.rest.repos.updateRelease({
               owner,
               repo,
               release_id: release.id,
-              body,
+              body: `${downloadSection}${body}`,
             });
 
             await core.summary

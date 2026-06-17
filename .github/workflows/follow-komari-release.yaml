@@ -12,11 +12,6 @@ on:
         required: false
         default: false
         type: boolean
-  repository_dispatch:
-    types:
-      - komari-release-published
-  schedule:
-    - cron: "17 * * * *"
 
 permissions:
   contents: write
@@ -104,14 +99,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f dist-release.zip
+          asset_name="silichicks-theme-${{ steps.release.outputs.tag }}.zip"
+          rm -f "$asset_name"
           rm -rf release-package
           mkdir -p release-package
           cp preview.png release-package/
           cp komari-theme.json release-package/
+          cp LICENSE release-package/
+          cp NOTICE release-package/
+          cp THIRD_PARTY_NOTICES.md release-package/
           cp -r dist release-package/
           cd release-package
-          zip -qr ../dist-release.zip .
+          zip -qr "../${asset_name}" .
+          cd ..
+          echo "ASSET_NAME=${asset_name}" >> "$GITHUB_ENV"
 
       - name: Generate release notes
         if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
@@ -130,6 +131,22 @@ jobs:
             exit 1
           fi
 
+          asset_name="silichicks-theme-${tag}.zip"
+          {
+            echo "## Download / Import"
+            echo
+            echo "For Komari theme import, download **\`${asset_name}\`** from the Assets section below."
+            echo
+            echo "Direct download: https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${asset_name}"
+            echo
+            echo "In Komari: Admin panel -> Theme Management -> Upload Theme -> select this zip file."
+            echo
+            echo "Do not import \`Source code (zip)\` or \`Source code (tar.gz)\`. Those are GitHub source archives, not Komari theme packages."
+            echo
+            cat release-notes.md
+          } > release-notes-with-download.md
+          mv release-notes-with-download.md release-notes.md
+
       - name: Create or update web release
         if: steps.release.outputs.exists != 'true' || steps.release.outputs.force == 'true'
         shell: bash
@@ -143,11 +160,11 @@ jobs:
               --title "$tag" \
               --notes-file release-notes.md \
               --latest
-            gh release upload "$tag" dist-release.zip \
+            gh release upload "$tag" "$ASSET_NAME" \
               --repo "$GITHUB_REPOSITORY" \
               --clobber
           else
-            gh release create "$tag" dist-release.zip \
+            gh release create "$tag" "$ASSET_NAME" \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "$tag" \
@@ -160,5 +177,5 @@ jobs:
             echo
             echo "Published $tag following ${{ steps.release.outputs.main_url }}."
             echo
-            echo "Asset: \`dist-release.zip\`"
+            echo "Asset: \`${ASSET_NAME}\`"
           } >> "$GITHUB_STEP_SUMMARY"
