@@ -1,75 +1,69 @@
-# Komari Web UI
+# silichicks theme for Komari
 
-参与翻译Komari？
-- 直接提PR
+`silichicks` is a customized Komari web theme based on
+[komari-monitor/komari-web](https://github.com/komari-monitor/komari-web).
 
-We use AI to assist with translations. If you find any issues, please let us know!
+It keeps Komari's original frontend structure and adds theme-specific UI
+changes, including the silichicks theme metadata, preview artwork, resource
+summary cards, cost summary controls, and adjusted node-table presentation.
 
-How to contribute to Komari translations?
-- Directly PR
+## Download
 
-## 开发环境配置
+Download the latest theme package from:
 
-> 我不是计科专业的，代码质量可能达不到平均水平，React是边学边写的，在此之前我从未接触过前端开发，请多包涵。
+https://github.com/bywenshu/silichicks-theme-for-komari/releases
 
-### 前置 Nodejs
+Install the `.zip` file from the Komari admin theme management page.
 
-如果未安装，请访问 [Node.js 官网](https://nodejs.org/) 下载并安装。版本建议为 22 及以上。
+## Theme Metadata
 
-### 安装依赖
+- Name: `silichicks`
+- Short name: `silichicks`
+- Repository: https://github.com/bywenshu/silichicks-theme-for-komari
+- Preview image: `dist/assets/silichicks-cover.webp`
+
+## Development
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-> 所有指令均在项目根目录下执行
-
-### 修改API地址
-
-1. 复制 `.env.example` 文件并重命名为 `.env.development`。
-
-2. 修改 `.env.development` 文件中的 `VITE_API_TARGET` 为你的开发环境地址。
-
-### 启动开发服务器
+Run the development server:
 
 ```bash
 npm run dev
 ```
 
-### 构建
+Build the frontend assets:
 
 ```bash
 npm run build
 ```
 
-## 主题相关
+Build a Komari theme package:
 
-如果你需要基于本项目进行二次开发，可以参考以下步骤：
+```bash
+./build-theme.sh
+```
 
-1. 完成开发环境配置
+The theme package contains `komari-theme.json`, `preview.png`, `dist/`, and
+the license and notice files required for redistribution.
 
-> 如果你是在 Linux 系统下开发，可以直接运行脚本 `build-theme.sh` 快速生成主题包。
+## Attribution
 
-2. 修改 `komari-theme.json` 中的相关配置，具体可参考 [主题配置文件 | Komari](https://komari-document.pages.dev/dev/theme.html#%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+This project is a derivative work of Komari Web UI. The upstream project and
+its authors retain their original copyright notices.
 
-   `configuration` 会根据 `type` 复用 `data` 字段：
+- Upstream frontend: https://github.com/komari-monitor/komari-web
+- Komari project: https://github.com/komari-monitor/komari
 
-   - `managed`: `data` 为配置项数组，后台会生成主题设置表单。
-   - `raw`: `data` 为 HTML 字符串，后台会在主内容区域渲染该 HTML。
-   - `redirect`: `data` 为站内相对路径，以实际部署的站点根目录（如 `VITE_BASE_URL`）为基准；例如根目录为 `/` 时 `settings` 或 `../settings` 会导航到 `/settings`，根目录为 `/abc/` 时会导航到 `/abc/settings`。
+The cover artwork was generated for this theme by the maintainer.
 
-3. 发挥你的想象和创造力，设计并实现你独特的主题风格！
+## License
 
-4. 构建主题
+This repository is distributed under the MIT License. See [LICENSE](LICENSE).
 
-   ```bash
-   npm run build
-   ```
-
-5. 生成的主题文件位于 `dist` 目录下，创建一个新的文件夹 `my-theme`（名称自定），将 `dist` 目录下复制到 `my-theme` 文件夹中。
-
-6. 将 `komari-theme.json` 文件复制到 `my-theme` 文件夹中。
-
-7. 将 `my-theme` 文件夹打包为 ZIP 文件。
-
-8. 在 Komari 的主题管理页面上传并应用你的自定义主题。
+Third-party runtime dependency license information is summarized in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

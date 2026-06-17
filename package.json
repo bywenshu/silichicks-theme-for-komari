@@ -1,7 +1,17 @@
 {
-  "name": "komari-web",
+  "name": "silichicks-theme-for-komari",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.1",
+  "description": "silichicks theme for Komari",
+  "license": "MIT",
+  "homepage": "https://github.com/bywenshu/silichicks-theme-for-komari",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bywenshu/silichicks-theme-for-komari.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bywenshu/silichicks-theme-for-komari/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

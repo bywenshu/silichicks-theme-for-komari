@@ -101,6 +101,13 @@ verify_files() {
         print_error "komari-theme.json not found"
         files_missing=true
     fi
+
+    for file in LICENSE NOTICE THIRD_PARTY_NOTICES.md; do
+        if [ ! -f "$file" ]; then
+            print_error "$file not found"
+            files_missing=true
+        fi
+    done
     
     if [ ! -d "dist" ]; then
         print_error "dist/ directory not found"
@@ -134,6 +141,9 @@ create_package() {
     # Copy required files
     cp preview.png theme-package/
     cp komari-theme.json theme-package/
+    cp LICENSE theme-package/
+    cp NOTICE theme-package/
+    cp THIRD_PARTY_NOTICES.md theme-package/
     cp -r dist/ theme-package/
     
     # Create zip file with version and commit hash
