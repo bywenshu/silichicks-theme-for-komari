@@ -365,6 +365,16 @@
   },
   "network_speed": "Network Speed",
   "costSummary": {
+    "additionalBudgetAdd": "Add Budget",
+    "additionalBudgetBillingCycle": "Billing Cycle (days)",
+    "additionalBudgetCurrency": "Currency",
+    "additionalBudgetEmpty": "No additional budgets",
+    "additionalBudgetHint": "Used locally for estimates; server bills are not changed.",
+    "additionalBudgetName": "Budget Name",
+    "additionalBudgetNamePlaceholder": "Name",
+    "additionalBudgetPrice": "Amount",
+    "additionalBudgetRemove": "Remove Budget",
+    "additionalBudgets": "Additional Budgets",
     "autoExcludeHint": "One-time and long-term servers are excluded automatically.",
     "clear": "Clear",
     "costExcludeHint": "Checked servers are excluded from cost totals.",
@@ -380,6 +390,9 @@
     "noRecurringNodes": "No counted costs",
     "settings": "Cost Summary Settings",
     "settingsButton": "Settings",
+    "speedIndicator": "Speed Indicator",
+    "speedIndicatorHint": "Show upload/download lights above the threshold, blinking across 20 levels up to 800Mbps.",
+    "speedIndicatorThreshold": "Light Threshold (KB/s)",
     "title": "Cost"
   },
   "nodeCard": {

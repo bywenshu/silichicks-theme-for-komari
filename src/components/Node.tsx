@@ -12,8 +12,10 @@ import UsageBar from "./UsageBar";
 import Flag from "./Flag";
 import { useTranslation } from "react-i18next";
 import Tips from "./ui/tips";
+import NetworkSpeedIndicator from "./NetworkSpeedIndicator";
 
 import { formatBytes } from "@/utils/unitHelper";
+import type { NetworkSpeedIndicatorSettings } from "@/utils/networkSpeedIndicator";
 
 /** 格式化秒*/
 export function formatUptime(seconds: number, t: TFunction): string {
@@ -36,6 +38,7 @@ interface NodeProps {
   online: boolean;
   isMobile: boolean;
   showIpTagsInCard: boolean;
+  networkSpeedIndicatorSettings: NetworkSpeedIndicatorSettings;
 }
 const DEFAULT_NODE_LIVE = {
   cpu: { usage: 0 },
@@ -52,7 +55,14 @@ const DEFAULT_NODE_LIVE = {
 } as Record;
 
 const Node = React.memo(
-  ({ basic, live, online, isMobile, showIpTagsInCard }: NodeProps) => {
+  ({
+    basic,
+    live,
+    online,
+    isMobile,
+    showIpTagsInCard,
+    networkSpeedIndicatorSettings,
+  }: NodeProps) => {
   const [t] = useTranslation();
   const liveData = live || DEFAULT_NODE_LIVE;
   const osImage = React.useMemo(() => getOSImage(basic.os), [basic.os]);
@@ -224,14 +234,26 @@ const Node = React.memo(
               {t("nodeCard.networkSpeed")}
             </Text>
             <Text size="2">
-              ↑ {uploadSpeed}/s ↓ {downloadSpeed}/s
+              <NodeNetworkSpeedValue
+                uploadBytes={liveData.network.up}
+                downloadBytes={liveData.network.down}
+                uploadSpeed={uploadSpeed}
+                downloadSpeed={downloadSpeed}
+                settings={networkSpeedIndicatorSettings}
+              />
             </Text>
           </Flex>
 
           <Flex justify="between" gap="2" hidden={!isMobile}>
             <Text size="2">{t("nodeCard.networkSpeed")}</Text>
             <Text size="2">
-              ↑ {uploadSpeed}/s ↓ {downloadSpeed}/s
+              <NodeNetworkSpeedValue
+                uploadBytes={liveData.network.up}
+                downloadBytes={liveData.network.down}
+                uploadSpeed={uploadSpeed}
+                downloadSpeed={downloadSpeed}
+                settings={networkSpeedIndicatorSettings}
+              />
             </Text>
           </Flex>
           <Flex justify="between" gap="2" hidden={!isMobile}>
@@ -280,12 +302,52 @@ const Node = React.memo(
   );
 });
 
+type NodeNetworkSpeedValueProps = {
+  uploadBytes: number;
+  downloadBytes: number;
+  uploadSpeed: string;
+  downloadSpeed: string;
+  settings: NetworkSpeedIndicatorSettings;
+};
+
+const NodeNetworkSpeedValue = React.memo(
+  ({
+    uploadBytes,
+    downloadBytes,
+    uploadSpeed,
+    downloadSpeed,
+    settings,
+  }: NodeNetworkSpeedValueProps) => (
+    <span className="inline-flex flex-wrap items-center justify-end gap-x-1 gap-y-0.5">
+      <span className="inline-flex items-center gap-1">
+        <span>↑</span>
+        <NetworkSpeedIndicator
+          active={settings.enabled && uploadBytes > settings.thresholdBytes}
+          bytesPerSecond={uploadBytes}
+          direction="upload"
+        />
+        <span>{uploadSpeed}/s</span>
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <span>↓</span>
+        <NetworkSpeedIndicator
+          active={settings.enabled && downloadBytes > settings.thresholdBytes}
+          bytesPerSecond={downloadBytes}
+          direction="download"
+        />
+        <span>{downloadSpeed}/s</span>
+      </span>
+    </span>
+  ),
+);
+
 export default Node;
 
 type NodeGridProps = {
   nodes: NodeBasicInfo[];
   liveData: LiveData;
   onlineSet: ReadonlySet<string>;
+  networkSpeedIndicatorSettings: NetworkSpeedIndicatorSettings;
 };
 
 import { Box } from "@radix-ui/themes";
@@ -298,7 +360,12 @@ import { TrendingUp } from "lucide-react";
 import MiniPingChartFloat from "./MiniPingChartFloat";
 import { getOSImage, getOSName } from "@/utils";
 import { usePublicInfo } from "@/contexts/PublicInfoContext";
-export const NodeGrid = ({ nodes, liveData, onlineSet }: NodeGridProps) => {
+export const NodeGrid = ({
+  nodes,
+  liveData,
+  onlineSet,
+  networkSpeedIndicatorSettings,
+}: NodeGridProps) => {
   const { publicInfo } = usePublicInfo();
   const isMobile = useIsMobile();
   const showIpTagsInCard = Boolean(
@@ -345,6 +412,7 @@ export const NodeGrid = ({ nodes, liveData, onlineSet }: NodeGridProps) => {
             online={isOnline}
             isMobile={isMobile}
             showIpTagsInCard={showIpTagsInCard}
+            networkSpeedIndicatorSettings={networkSpeedIndicatorSettings}
           />
         );
       })}

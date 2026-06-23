@@ -71,6 +71,7 @@ build_project() {
 update_theme_config() {
     print_status "Updating theme configuration..."
     
+    PACKAGE_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")
     # Get current date in YY.MM.DD format
     VERSION_DATE=$(date +"%y.%m.%d")
     # Get commit hash (short)
@@ -81,7 +82,8 @@ update_theme_config() {
         print_warning "Not a git repository, using 'dev' as commit hash"
     fi
     
-    echo "Version: $VERSION_DATE"
+    echo "Version: $PACKAGE_VERSION"
+    echo "Build date: $VERSION_DATE"
     echo "Commit: $COMMIT_HASH"
 
 }
@@ -127,7 +129,7 @@ create_package() {
     print_status "Creating theme package..."
     
     # Get version info
-    VERSION_DATE=$(date +"%y.%m.%d")
+    PACKAGE_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")
     if git rev-parse --short HEAD &> /dev/null; then
         COMMIT_HASH=$(git rev-parse --short HEAD)
     else
@@ -144,10 +146,13 @@ create_package() {
     cp LICENSE theme-package/
     cp NOTICE theme-package/
     cp THIRD_PARTY_NOTICES.md theme-package/
-    cp -r dist/ theme-package/
-    
-    # Create zip file with version and commit hash
-    ZIP_NAME="komari-theme-v${VERSION_DATE}-${COMMIT_HASH}.zip"
+    mkdir -p theme-package/dist
+    cp -r dist/. theme-package/dist/
+    find theme-package/dist -maxdepth 1 -name 'komari-theme-v*.zip' -delete
+
+    # Create zip file with package version
+    ZIP_NAME="komari-theme-v${PACKAGE_VERSION}.zip"
+    rm -f "dist/${ZIP_NAME}"
     
     cd theme-package
     zip -r "../dist/${ZIP_NAME}" .

@@ -365,6 +365,16 @@
   },
   "network_speed": "網路速率",
   "costSummary": {
+    "additionalBudgetAdd": "新增預算",
+    "additionalBudgetBillingCycle": "計費週期（天）",
+    "additionalBudgetCurrency": "幣別",
+    "additionalBudgetEmpty": "暫無新增預算",
+    "additionalBudgetHint": "僅用於本地估算，不會修改伺服器帳單。",
+    "additionalBudgetName": "預算名稱",
+    "additionalBudgetNamePlaceholder": "名稱",
+    "additionalBudgetPrice": "金額",
+    "additionalBudgetRemove": "刪除預算",
+    "additionalBudgets": "新增預算",
     "autoExcludeHint": "一次性付費和長期伺服器已自動排除。",
     "clear": "清空",
     "costExcludeHint": "勾選後不參與成本統計。",
@@ -380,6 +390,9 @@
     "noRecurringNodes": "無可統計成本",
     "settings": "成本統計設定",
     "settingsButton": "設定",
+    "speedIndicator": "速率指示燈",
+    "speedIndicatorHint": "超過閾值時顯示上傳/下載指示燈，並按 800Mbps 內的 20 個檔位閃動。",
+    "speedIndicatorThreshold": "亮起閾值（KB/s）",
     "title": "成本"
   },
   "nodeCard": {

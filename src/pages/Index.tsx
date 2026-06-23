@@ -16,10 +16,12 @@ import { formatBytes } from "@/utils/unitHelper";
 import { useLiveData } from "../contexts/LiveDataContext";
 import { useNodeList, type NodeBasicInfo } from "@/contexts/NodeListContext";
 import Loading from "@/components/loading";
-import { Settings } from "lucide-react";
+import { Plus, Settings, Trash2 } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { LiveData } from "@/types/LiveData";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import NetworkSpeedIndicator from "@/components/NetworkSpeedIndicator";
 import {
   calculateCostSummary,
   COST_CURRENCY_OPTIONS,
@@ -28,9 +30,16 @@ import {
   getCostSourceCurrencies,
   normalizeCostSummarySettings,
   normalizeIdList,
+  type AdditionalBudgetItem,
   type CostCurrencyCode,
   type CostSummarySettings,
 } from "@/utils/costSummary";
+import {
+  BYTES_PER_KB,
+  DEFAULT_NETWORK_SPEED_INDICATOR_SETTINGS,
+  normalizeNetworkSpeedIndicatorSettings,
+  type NetworkSpeedIndicatorSettings,
+} from "@/utils/networkSpeedIndicator";
 
 const BYTES_PER_GB = 1024 ** 3;
 
@@ -76,6 +85,23 @@ const STATUS_CARD_VISIBILITY_DEFAULTS = {
 
 type StatusCardKey = keyof typeof STATUS_CARD_VISIBILITY_DEFAULTS;
 
+type AdditionalBudgetUpdate = Partial<Omit<AdditionalBudgetItem, "id">>;
+
+const createAdditionalBudgetId = (): string => {
+  if (typeof window !== "undefined" && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  return `additional-budget-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+};
+
+const parseInputNumber = (value: string, fallback = 0): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 const Index = () => {
   const [t] = useTranslation();
   const { live_data } = useLiveData();
@@ -105,6 +131,18 @@ const Index = () => {
     () => new Set(networkSpeedExcludedNodeIds),
     [networkSpeedExcludedNodeIds],
   );
+  const [
+    networkSpeedIndicatorSettingsRaw,
+    setNetworkSpeedIndicatorSettings,
+  ] = useLocalStorage<NetworkSpeedIndicatorSettings>(
+    "networkSpeedIndicatorSettings",
+    DEFAULT_NETWORK_SPEED_INDICATOR_SETTINGS,
+  );
+  const networkSpeedIndicatorSettings = useMemo(
+    () =>
+      normalizeNetworkSpeedIndicatorSettings(networkSpeedIndicatorSettingsRaw),
+    [networkSpeedIndicatorSettingsRaw],
+  );
   const [costSummarySettingsRaw, setCostSummarySettings] =
     useLocalStorage<CostSummarySettings>(
       "costSummarySettings",
@@ -119,8 +157,17 @@ const Index = () => {
     [costSummarySettings.excludedNodeIds],
   );
   const costSourceCurrencies = useMemo(
-    () => getCostSourceCurrencies(nodeList ?? [], costExcludedNodeIdSet),
-    [costExcludedNodeIdSet, nodeList],
+    () =>
+      getCostSourceCurrencies(
+        nodeList ?? [],
+        costExcludedNodeIdSet,
+        costSummarySettings.additionalBudgets,
+      ),
+    [
+      costExcludedNodeIdSet,
+      costSummarySettings.additionalBudgets,
+      nodeList,
+    ],
   );
   const exchangeRates = useExchangeRates(
     costSummarySettings.currency,
@@ -133,9 +180,11 @@ const Index = () => {
         costSummarySettings.currency,
         costExcludedNodeIdSet,
         exchangeRates.rates,
+        costSummarySettings.additionalBudgets,
       ),
     [
       costExcludedNodeIdSet,
+      costSummarySettings.additionalBudgets,
       costSummarySettings.currency,
       exchangeRates.rates,
       nodeList,
@@ -186,6 +235,30 @@ const Index = () => {
     setNetworkSpeedExcludedNodeIds([]);
   }, [setNetworkSpeedExcludedNodeIds]);
 
+  const updateNetworkSpeedIndicatorEnabled = useCallback(
+    (enabled: boolean) => {
+      setNetworkSpeedIndicatorSettings((current) => ({
+        ...normalizeNetworkSpeedIndicatorSettings(current),
+        enabled,
+      }));
+    },
+    [setNetworkSpeedIndicatorSettings],
+  );
+
+  const updateNetworkSpeedIndicatorThreshold = useCallback(
+    (thresholdKilobytesPerSecond: number) => {
+      const safeThreshold = Number.isFinite(thresholdKilobytesPerSecond)
+        ? thresholdKilobytesPerSecond
+        : 0;
+
+      setNetworkSpeedIndicatorSettings((current) => ({
+        ...normalizeNetworkSpeedIndicatorSettings(current),
+        thresholdBytes: Math.max(0, safeThreshold * BYTES_PER_KB),
+      }));
+    },
+    [setNetworkSpeedIndicatorSettings],
+  );
+
   const updateCostCurrency = useCallback(
     (currency: CostCurrencyCode) => {
       setCostSummarySettings((current) => ({
@@ -221,6 +294,71 @@ const Index = () => {
       excludedNodeIds: [],
     }));
   }, [setCostSummarySettings]);
+
+  const addAdditionalBudget = useCallback(() => {
+    setCostSummarySettings((current) => {
+      const settings = normalizeCostSummarySettings(current);
+
+      return {
+        ...settings,
+        additionalBudgets: [
+          ...settings.additionalBudgets,
+          {
+            id: createAdditionalBudgetId(),
+            name: "",
+            price: 0,
+            billingCycle: 30,
+            currency: settings.currency,
+          },
+        ],
+      };
+    });
+  }, [setCostSummarySettings]);
+
+  const updateAdditionalBudget = useCallback(
+    (budgetId: string, update: AdditionalBudgetUpdate) => {
+      setCostSummarySettings((current) => {
+        const settings = normalizeCostSummarySettings(current);
+
+        return {
+          ...settings,
+          additionalBudgets: settings.additionalBudgets.map((budget) =>
+            budget.id === budgetId
+              ? {
+                  ...budget,
+                  ...update,
+                  price:
+                    update.price === undefined
+                      ? budget.price
+                      : Math.max(0, update.price),
+                  billingCycle:
+                    update.billingCycle === undefined
+                      ? budget.billingCycle
+                      : Math.max(1, update.billingCycle),
+                }
+              : budget,
+          ),
+        };
+      });
+    },
+    [setCostSummarySettings],
+  );
+
+  const removeAdditionalBudget = useCallback(
+    (budgetId: string) => {
+      setCostSummarySettings((current) => {
+        const settings = normalizeCostSummarySettings(current);
+
+        return {
+          ...settings,
+          additionalBudgets: settings.additionalBudgets.filter(
+            (budget) => budget.id !== budgetId,
+          ),
+        };
+      });
+    },
+    [setCostSummarySettings],
+  );
 
   const summaryStats = useMemo(() => {
     const regions = new Set<string>();
@@ -263,7 +401,8 @@ const Index = () => {
       memoryText: `${formatGb(usedMemoryBytes)} / ${formatGb(totalMemoryBytes)}`,
       diskText: `${formatGb(usedDiskBytes)} / ${formatGb(totalDiskBytes)}`,
       trafficText: `↑ ${formatBytes(totalUp)} / ↓ ${formatBytes(totalDown)}`,
-      speedText: `↑ ${formatSpeed(speedUp)} / ↓ ${formatSpeed(speedDown)}`,
+      speedUp,
+      speedDown,
     };
   }, [liveData.data, networkSpeedExcludedNodeIdSet, nodeList, onlineSet]);
 
@@ -312,7 +451,13 @@ const Index = () => {
       {
         key: "networkSpeed" as const,
         title: t("network_speed"),
-        value: summaryStats.speedText,
+        value: (
+          <NetworkSpeedValue
+            uploadBytes={summaryStats.speedUp}
+            downloadBytes={summaryStats.speedDown}
+            indicatorSettings={networkSpeedIndicatorSettings}
+          />
+        ),
         visible: mergedStatusCardsVisibility.networkSpeed,
         action: (
           <NodeExclusionPopover
@@ -320,6 +465,9 @@ const Index = () => {
             hint={t("costSummary.networkExcludeHint")}
             nodes={nodeList ?? []}
             excludedNodeIds={networkSpeedExcludedNodeIds}
+            indicatorSettings={networkSpeedIndicatorSettings}
+            onIndicatorEnabledChange={updateNetworkSpeedIndicatorEnabled}
+            onIndicatorThresholdChange={updateNetworkSpeedIndicatorThreshold}
             onToggle={updateNetworkSpeedExclusion}
             onClear={clearNetworkSpeedExclusions}
           />
@@ -338,24 +486,33 @@ const Index = () => {
             onCurrencyChange={updateCostCurrency}
             onToggle={updateCostExclusion}
             onClear={clearCostExclusions}
+            onAddBudget={addAdditionalBudget}
+            onUpdateBudget={updateAdditionalBudget}
+            onRemoveBudget={removeAdditionalBudget}
           />
         ),
       },
     ],
     [
+      addAdditionalBudget,
       clearCostExclusions,
       clearNetworkSpeedExclusions,
       costSummaryDescription,
       costSummarySettings,
       costSummaryText,
       mergedStatusCardsVisibility,
+      networkSpeedIndicatorSettings,
       networkSpeedExcludedNodeIds,
       nodeList,
       onlineSet.size,
+      removeAdditionalBudget,
       summaryStats,
       t,
       updateCostCurrency,
       updateCostExclusion,
+      updateAdditionalBudget,
+      updateNetworkSpeedIndicatorEnabled,
+      updateNetworkSpeedIndicatorThreshold,
       updateNetworkSpeedExclusion,
     ],
   );
@@ -440,7 +597,11 @@ const Index = () => {
         </div>
       </Card>
       <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
-        <NodeDisplay nodes={nodeList ?? []} liveData={liveData} />
+        <NodeDisplay
+          nodes={nodeList ?? []}
+          liveData={liveData}
+          networkSpeedIndicatorSettings={networkSpeedIndicatorSettings}
+        />
       </Suspense>
     </>
   );
@@ -522,6 +683,46 @@ const TopCard: React.FC<TopCardProps> = React.memo(
           )}
         </Flex>
       </div>
+    );
+  },
+);
+
+type NetworkSpeedValueProps = {
+  uploadBytes: number;
+  downloadBytes: number;
+  indicatorSettings: NetworkSpeedIndicatorSettings;
+};
+
+const NetworkSpeedValue: React.FC<NetworkSpeedValueProps> = React.memo(
+  ({ uploadBytes, downloadBytes, indicatorSettings }) => {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
+        <span className="inline-flex items-center gap-1">
+          <span>↑</span>
+          <NetworkSpeedIndicator
+            active={
+              indicatorSettings.enabled &&
+              uploadBytes > indicatorSettings.thresholdBytes
+            }
+            bytesPerSecond={uploadBytes}
+            direction="upload"
+          />
+          <span>{formatSpeed(uploadBytes)}</span>
+        </span>
+        <span className="text-muted-foreground">/</span>
+        <span className="inline-flex items-center gap-1">
+          <span>↓</span>
+          <NetworkSpeedIndicator
+            active={
+              indicatorSettings.enabled &&
+              downloadBytes > indicatorSettings.thresholdBytes
+            }
+            bytesPerSecond={downloadBytes}
+            direction="download"
+          />
+          <span>{formatSpeed(downloadBytes)}</span>
+        </span>
+      </span>
     );
   },
 );
@@ -624,17 +825,32 @@ type NodeExclusionPopoverProps = {
   hint: string;
   nodes: NodeBasicInfo[];
   excludedNodeIds: string[];
+  indicatorSettings: NetworkSpeedIndicatorSettings;
+  onIndicatorEnabledChange: (enabled: boolean) => void;
+  onIndicatorThresholdChange: (thresholdKilobytesPerSecond: number) => void;
   onToggle: (nodeId: string, excluded: boolean) => void;
   onClear: () => void;
 };
 
 const NodeExclusionPopover: React.FC<NodeExclusionPopoverProps> = React.memo(
-  ({ title, hint, nodes, excludedNodeIds, onToggle, onClear }) => {
+  ({
+    title,
+    hint,
+    nodes,
+    excludedNodeIds,
+    indicatorSettings,
+    onIndicatorEnabledChange,
+    onIndicatorThresholdChange,
+    onToggle,
+    onClear,
+  }) => {
     const [t] = useTranslation();
     const excludedNodeIdSet = useMemo(
       () => new Set(excludedNodeIds),
       [excludedNodeIds],
     );
+    const thresholdKilobytesPerSecond =
+      indicatorSettings.thresholdBytes / BYTES_PER_KB;
 
     return (
       <Popover.Root>
@@ -667,6 +883,35 @@ const NodeExclusionPopover: React.FC<NodeExclusionPopoverProps> = React.memo(
             <Text size="1" color="gray">
               {hint}
             </Text>
+            <Flex direction="column" gap="2">
+              <Flex justify="between" align="center" gap="2">
+                <Text size="2">{t("costSummary.speedIndicator")}</Text>
+                <Switch
+                  checked={indicatorSettings.enabled}
+                  onCheckedChange={onIndicatorEnabledChange}
+                />
+              </Flex>
+              <Flex direction="column" gap="1">
+                <Text size="1" color="gray">
+                  {t("costSummary.speedIndicatorThreshold")}
+                </Text>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={Number(thresholdKilobytesPerSecond.toFixed(2))}
+                  disabled={!indicatorSettings.enabled}
+                  onChange={(event) =>
+                    onIndicatorThresholdChange(
+                      parseInputNumber(event.target.value),
+                    )
+                  }
+                />
+              </Flex>
+              <Text size="1" color="gray">
+                {t("costSummary.speedIndicatorHint")}
+              </Text>
+            </Flex>
             <Text size="1" color="gray">
               {t("costSummary.excludedCount", {
                 count: excludedNodeIds.length,
@@ -708,10 +953,22 @@ type CostSettingsPopoverProps = {
   onCurrencyChange: (currency: CostCurrencyCode) => void;
   onToggle: (nodeId: string, excluded: boolean) => void;
   onClear: () => void;
+  onAddBudget: () => void;
+  onUpdateBudget: (budgetId: string, update: AdditionalBudgetUpdate) => void;
+  onRemoveBudget: (budgetId: string) => void;
 };
 
 const CostSettingsPopover: React.FC<CostSettingsPopoverProps> = React.memo(
-  ({ nodes, settings, onCurrencyChange, onToggle, onClear }) => {
+  ({
+    nodes,
+    settings,
+    onCurrencyChange,
+    onToggle,
+    onClear,
+    onAddBudget,
+    onUpdateBudget,
+    onRemoveBudget,
+  }) => {
     const [t] = useTranslation();
 
     return (
@@ -726,7 +983,7 @@ const CostSettingsPopover: React.FC<CostSettingsPopoverProps> = React.memo(
             <Settings size={14} />
           </IconButton>
         </Popover.Trigger>
-        <Popover.Content width="340px">
+        <Popover.Content width="400px">
           <Flex direction="column" gap="3">
             <Text size="2" weight="bold">
               {t("costSummary.settings")}
@@ -754,6 +1011,12 @@ const CostSettingsPopover: React.FC<CostSettingsPopoverProps> = React.memo(
             <Text size="1" color="gray">
               {t("costSummary.autoExcludeHint")}
             </Text>
+            <AdditionalBudgetSection
+              budgets={settings.additionalBudgets}
+              onAdd={onAddBudget}
+              onUpdate={onUpdateBudget}
+              onRemove={onRemoveBudget}
+            />
             <NodeExclusionList
               nodes={nodes}
               excludedNodeIds={settings.excludedNodeIds}
@@ -766,6 +1029,143 @@ const CostSettingsPopover: React.FC<CostSettingsPopoverProps> = React.memo(
     );
   },
 );
+
+type AdditionalBudgetSectionProps = {
+  budgets: AdditionalBudgetItem[];
+  onAdd: () => void;
+  onUpdate: (budgetId: string, update: AdditionalBudgetUpdate) => void;
+  onRemove: (budgetId: string) => void;
+};
+
+const AdditionalBudgetSection: React.FC<AdditionalBudgetSectionProps> =
+  React.memo(({ budgets, onAdd, onUpdate, onRemove }) => {
+    const [t] = useTranslation();
+
+    return (
+      <Flex direction="column" gap="2">
+        <Flex justify="between" align="center" gap="2">
+          <Text size="2" weight="bold">
+            {t("costSummary.additionalBudgets")}
+          </Text>
+          <IconButton
+            type="button"
+            size="1"
+            variant="ghost"
+            aria-label={t("costSummary.additionalBudgetAdd")}
+            title={t("costSummary.additionalBudgetAdd")}
+            onClick={onAdd}
+          >
+            <Plus size={14} />
+          </IconButton>
+        </Flex>
+        <Text size="1" color="gray">
+          {t("costSummary.additionalBudgetHint")}
+        </Text>
+        {budgets.length === 0 ? (
+          <Text size="2" color="gray">
+            {t("costSummary.additionalBudgetEmpty")}
+          </Text>
+        ) : (
+          <Flex direction="column" gap="2" className="max-h-72 overflow-auto">
+            {budgets.map((budget) => (
+              <div
+                key={budget.id}
+                className="rounded-md border border-border p-2"
+              >
+                <Flex direction="column" gap="2">
+                  <Flex align="center" gap="2">
+                    <Input
+                      className="h-8"
+                      aria-label={t("costSummary.additionalBudgetName")}
+                      placeholder={t(
+                        "costSummary.additionalBudgetNamePlaceholder",
+                      )}
+                      value={budget.name}
+                      onChange={(event) =>
+                        onUpdate(budget.id, { name: event.target.value })
+                      }
+                    />
+                    <IconButton
+                      type="button"
+                      size="1"
+                      color="red"
+                      variant="ghost"
+                      aria-label={t("costSummary.additionalBudgetRemove")}
+                      title={t("costSummary.additionalBudgetRemove")}
+                      onClick={() => onRemove(budget.id)}
+                    >
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </Flex>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Flex direction="column" gap="1">
+                      <Text size="1" color="gray">
+                        {t("costSummary.additionalBudgetPrice")}
+                      </Text>
+                      <Input
+                        className="h-8"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={budget.price}
+                        onChange={(event) =>
+                          onUpdate(budget.id, {
+                            price: parseInputNumber(event.target.value),
+                          })
+                        }
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      <Text size="1" color="gray">
+                        {t("costSummary.additionalBudgetBillingCycle")}
+                      </Text>
+                      <Input
+                        className="h-8"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={budget.billingCycle}
+                        onChange={(event) =>
+                          onUpdate(budget.id, {
+                            billingCycle: Math.max(
+                              1,
+                              parseInputNumber(event.target.value, 1),
+                            ),
+                          })
+                        }
+                      />
+                    </Flex>
+                  </div>
+                  <Flex direction="column" gap="1">
+                    <Text size="1" color="gray">
+                      {t("costSummary.additionalBudgetCurrency")}
+                    </Text>
+                    <Select.Root
+                      value={budget.currency}
+                      onValueChange={(value) =>
+                        onUpdate(budget.id, {
+                          currency: value as CostCurrencyCode,
+                        })
+                      }
+                    >
+                      <Select.Trigger />
+                      <Select.Content>
+                        {COST_CURRENCY_OPTIONS.map((option) => (
+                          <Select.Item key={option.code} value={option.code}>
+                            {option.label}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Root>
+                  </Flex>
+                </Flex>
+              </div>
+            ))}
+          </Flex>
+        )}
+      </Flex>
+    );
+  });
 
 type NodeExclusionListProps = {
   nodes: NodeBasicInfo[];

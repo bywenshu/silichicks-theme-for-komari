@@ -14,6 +14,7 @@ import type { LiveData } from "../types/LiveData";
 import { NodeGrid } from "./Node";
 const NodeTable = React.lazy(() => import("./NodeTable"));
 import { isRegionMatch } from "@/utils/regionHelper";
+import type { NetworkSpeedIndicatorSettings } from "@/utils/networkSpeedIndicator";
 import "./NodeDisplay.css";
 
 export type ViewMode = "grid" | "table";
@@ -21,9 +22,14 @@ export type ViewMode = "grid" | "table";
 interface NodeDisplayProps {
   nodes: NodeBasicInfo[];
   liveData: LiveData;
+  networkSpeedIndicatorSettings: NetworkSpeedIndicatorSettings;
 }
 
-const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
+const NodeDisplay: React.FC<NodeDisplayProps> = ({
+  nodes,
+  liveData,
+  networkSpeedIndicatorSettings,
+}) => {
   const [t] = useTranslation();
   const [viewMode, setViewMode] = useLocalStorage<ViewMode>(
     "nodeViewMode",
@@ -255,6 +261,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               nodes={filteredNodes}
               liveData={liveData}
               onlineSet={onlineSet}
+              networkSpeedIndicatorSettings={networkSpeedIndicatorSettings}
             />
           ) : (
             <Suspense
@@ -264,6 +271,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
                 nodes={filteredNodes}
                 liveData={liveData}
                 onlineSet={onlineSet}
+                networkSpeedIndicatorSettings={networkSpeedIndicatorSettings}
               />
             </Suspense>
           )}

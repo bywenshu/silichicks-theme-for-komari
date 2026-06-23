@@ -12,9 +12,18 @@ export type CostCurrencyCode =
   | "AUD"
   | "CAD";
 
+export type AdditionalBudgetItem = {
+  id: string;
+  name: string;
+  price: number;
+  billingCycle: number;
+  currency: CostCurrencyCode;
+};
+
 export type CostSummarySettings = {
   currency: CostCurrencyCode;
   excludedNodeIds: string[];
+  additionalBudgets: AdditionalBudgetItem[];
 };
 
 export type CostSummary = {
@@ -44,6 +53,7 @@ export const COST_CURRENCY_OPTIONS: Array<{
 export const DEFAULT_COST_SUMMARY_SETTINGS: CostSummarySettings = {
   currency: "CNY",
   excludedNodeIds: [],
+  additionalBudgets: [],
 };
 
 const COST_CURRENCY_CODES = new Set(
@@ -92,6 +102,44 @@ export const normalizeIdList = (value: unknown): string[] =>
       )
     : [];
 
+const numberOrZero = (value: unknown): number => {
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : NaN;
+
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeAdditionalBudgets = (value: unknown): AdditionalBudgetItem[] =>
+  Array.isArray(value)
+    ? value.map((item, index) => {
+        const budget =
+          item && typeof item === "object"
+            ? (item as Partial<AdditionalBudgetItem>)
+            : {};
+        const id =
+          typeof budget.id === "string" && budget.id.trim()
+            ? budget.id
+            : `additional-budget-${index}`;
+        const currency = COST_CURRENCY_CODES.has(
+          budget.currency as CostCurrencyCode,
+        )
+          ? (budget.currency as CostCurrencyCode)
+          : DEFAULT_COST_SUMMARY_SETTINGS.currency;
+
+        return {
+          id,
+          name: typeof budget.name === "string" ? budget.name : "",
+          price: Math.max(0, numberOrZero(budget.price)),
+          billingCycle: Math.max(1, numberOrZero(budget.billingCycle) || 30),
+          currency,
+        };
+      })
+    : [];
+
 export const normalizeCostSummarySettings = (
   value: unknown,
 ): CostSummarySettings => {
@@ -106,6 +154,7 @@ export const normalizeCostSummarySettings = (
   return {
     currency,
     excludedNodeIds: normalizeIdList(settings.excludedNodeIds),
+    additionalBudgets: normalizeAdditionalBudgets(settings.additionalBudgets),
   };
 };
 
@@ -128,15 +177,24 @@ export const isRecurringCostNode = (node: NodeBasicInfo): boolean =>
   node.billing_cycle > 0 &&
   !isLongTermNode(node.expired_at);
 
+const isRecurringBudgetItem = (budget: AdditionalBudgetItem): boolean =>
+  budget.price > 0 && budget.billingCycle > 0;
+
 export const getCostSourceCurrencies = (
   nodes: NodeBasicInfo[],
   excludedNodeIds: ReadonlySet<string>,
+  additionalBudgets: AdditionalBudgetItem[] = [],
 ): CostCurrencyCode[] => {
   const currencies = new Set<CostCurrencyCode>();
 
   for (const node of nodes) {
     if (excludedNodeIds.has(node.uuid) || !isRecurringCostNode(node)) continue;
     currencies.add(normalizeCurrencyCode(node.currency));
+  }
+
+  for (const budget of additionalBudgets) {
+    if (!isRecurringBudgetItem(budget)) continue;
+    currencies.add(budget.currency);
   }
 
   return Array.from(currencies).sort();
@@ -147,6 +205,7 @@ export const calculateCostSummary = (
   targetCurrency: CostCurrencyCode,
   excludedNodeIds: ReadonlySet<string>,
   conversionRates: Partial<Record<CostCurrencyCode, number>>,
+  additionalBudgets: AdditionalBudgetItem[] = [],
 ): CostSummary => {
   const missingCurrencies = new Set<CostCurrencyCode>();
   let monthly = 0;
@@ -173,6 +232,27 @@ export const calculateCostSummary = (
     const convertedPrice = node.price * conversionRate;
     monthly += (convertedPrice / node.billing_cycle) * AVERAGE_DAYS_PER_MONTH;
     yearly += (convertedPrice / node.billing_cycle) * 365.25;
+    includedCount += 1;
+  }
+
+  for (const budget of additionalBudgets) {
+    if (!isRecurringBudgetItem(budget)) {
+      skippedCount += 1;
+      continue;
+    }
+
+    const conversionRate =
+      budget.currency === targetCurrency ? 1 : conversionRates[budget.currency];
+
+    if (!conversionRate || conversionRate <= 0) {
+      missingCurrencies.add(budget.currency);
+      skippedCount += 1;
+      continue;
+    }
+
+    const convertedPrice = budget.price * conversionRate;
+    monthly += (convertedPrice / budget.billingCycle) * AVERAGE_DAYS_PER_MONTH;
+    yearly += (convertedPrice / budget.billingCycle) * 365.25;
     includedCount += 1;
   }
 

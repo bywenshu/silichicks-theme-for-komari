@@ -1,0 +1,39 @@
+.network-io-indicator {
+  --network-io-blink-duration: 1200ms;
+  animation: network-io-blink var(--network-io-blink-duration) ease-in-out
+    infinite;
+  will-change: opacity, transform, box-shadow;
+}
+
+.network-io-indicator--upload {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgb(16 185 129 / 18%);
+}
+
+.network-io-indicator--download {
+  background: #0ea5e9;
+  box-shadow: 0 0 0 3px rgb(14 165 233 / 18%);
+}
+
+@keyframes network-io-blink {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.78);
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0%);
+  }
+
+  45%,
+  55% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .network-io-indicator {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

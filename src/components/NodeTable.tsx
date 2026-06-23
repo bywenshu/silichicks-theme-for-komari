@@ -23,11 +23,14 @@ import { DetailsGrid } from "./DetailsGrid";
 import MiniPingChart from "./MiniPingChart";
 import { getOSImage } from "@/utils";
 import { usePublicInfo } from "@/contexts/PublicInfoContext";
+import NetworkSpeedIndicator from "./NetworkSpeedIndicator";
+import type { NetworkSpeedIndicatorSettings } from "@/utils/networkSpeedIndicator";
 
 interface NodeTableProps {
   nodes: NodeBasicInfo[];
   liveData: LiveData;
   onlineSet: ReadonlySet<string>;
+  networkSpeedIndicatorSettings: NetworkSpeedIndicatorSettings;
 }
 
 type SortField =
@@ -62,7 +65,12 @@ const DEFAULT_TABLE_LIVE = {
   updated_at: "",
 } as Record;
 
-const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => {
+const NodeTable: React.FC<NodeTableProps> = ({
+  nodes,
+  liveData,
+  onlineSet,
+  networkSpeedIndicatorSettings,
+}) => {
   const [t] = useTranslation();
   const { publicInfo } = usePublicInfo();
   const offlineServerPosition =
@@ -431,10 +439,18 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
                     />
                   </TableCell>
                   <TableCell className="text-center min-w-[80px]">
-                    <label>↑{formatBytes(nodeData.network.up)}/s</label>
+                    <TableNetworkSpeedValue
+                      bytesPerSecond={nodeData.network.up}
+                      direction="upload"
+                      settings={networkSpeedIndicatorSettings}
+                    />
                   </TableCell>
                   <TableCell className="text-center min-w-[80px]">
-                    <label>↓{formatBytes(nodeData.network.down)}/s</label>
+                    <TableNetworkSpeedValue
+                      bytesPerSecond={nodeData.network.down}
+                      direction="download"
+                      settings={networkSpeedIndicatorSettings}
+                    />
                   </TableCell>
                   <TableCell className="text-center min-w-[80px]">
                     <label>↑{formatBytes(nodeData.network.totalUp)}</label>
@@ -462,6 +478,26 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData, onlineSet }) => 
     </div>
   );
 };
+
+type TableNetworkSpeedValueProps = {
+  bytesPerSecond: number;
+  direction: "upload" | "download";
+  settings: NetworkSpeedIndicatorSettings;
+};
+
+const TableNetworkSpeedValue: React.FC<TableNetworkSpeedValueProps> = React.memo(
+  ({ bytesPerSecond, direction, settings }) => (
+    <label className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+      <span>{direction === "upload" ? "↑" : "↓"}</span>
+      <NetworkSpeedIndicator
+        active={settings.enabled && bytesPerSecond > settings.thresholdBytes}
+        bytesPerSecond={bytesPerSecond}
+        direction={direction}
+      />
+      <span>{formatBytes(bytesPerSecond)}/s</span>
+    </label>
+  ),
+);
 
 // 展开的节点详细信息组件
 interface ExpandedNodeDetailsProps {

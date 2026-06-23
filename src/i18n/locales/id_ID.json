@@ -365,6 +365,16 @@
   },
   "network_speed": "Kecepatan Jaringan",
   "costSummary": {
+    "additionalBudgetAdd": "Tambah Anggaran",
+    "additionalBudgetBillingCycle": "Siklus Tagihan (hari)",
+    "additionalBudgetCurrency": "Mata Uang",
+    "additionalBudgetEmpty": "Tidak ada anggaran tambahan",
+    "additionalBudgetHint": "Dipakai lokal untuk estimasi; tagihan server tidak diubah.",
+    "additionalBudgetName": "Nama Anggaran",
+    "additionalBudgetNamePlaceholder": "Nama",
+    "additionalBudgetPrice": "Jumlah",
+    "additionalBudgetRemove": "Hapus Anggaran",
+    "additionalBudgets": "Anggaran Tambahan",
     "autoExcludeHint": "Server sekali bayar dan jangka panjang otomatis dikecualikan.",
     "clear": "Bersihkan",
     "costExcludeHint": "Server yang dicentang dikecualikan dari total biaya.",
@@ -380,6 +390,9 @@
     "noRecurringNodes": "Tidak ada biaya yang dihitung",
     "settings": "Pengaturan Ringkasan Biaya",
     "settingsButton": "Pengaturan",
+    "speedIndicator": "Indikator Kecepatan",
+    "speedIndicatorHint": "Tampilkan lampu unggah/unduh di atas ambang, berkedip dalam 20 level hingga 800Mbps.",
+    "speedIndicatorThreshold": "Ambang Menyala (KB/s)",
     "title": "Biaya"
   },
   "nodeCard": {

@@ -365,6 +365,16 @@
   },
   "network_speed": "ネットワーク速度",
   "costSummary": {
+    "additionalBudgetAdd": "予算を追加",
+    "additionalBudgetBillingCycle": "請求周期（日）",
+    "additionalBudgetCurrency": "通貨",
+    "additionalBudgetEmpty": "追加予算はありません",
+    "additionalBudgetHint": "見積もり用のローカル項目です。サーバー請求は変更されません。",
+    "additionalBudgetName": "予算名",
+    "additionalBudgetNamePlaceholder": "名前",
+    "additionalBudgetPrice": "金額",
+    "additionalBudgetRemove": "予算を削除",
+    "additionalBudgets": "追加予算",
     "autoExcludeHint": "買い切りと長期サーバーは自動的に除外されます。",
     "clear": "クリア",
     "costExcludeHint": "チェックしたサーバーはコスト集計から除外されます。",
@@ -380,6 +390,9 @@
     "noRecurringNodes": "集計対象コストなし",
     "settings": "コスト集計設定",
     "settingsButton": "設定",
+    "speedIndicator": "速度インジケーター",
+    "speedIndicatorHint": "しきい値を超えるとアップロード/ダウンロードのインジケーターを表示し、800Mbps までの 20 段階で点滅します。",
+    "speedIndicatorThreshold": "点灯しきい値（KB/s）",
     "title": "コスト"
   },
   "nodeCard": {
